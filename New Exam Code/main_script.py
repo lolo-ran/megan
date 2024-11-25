@@ -1,5 +1,5 @@
 import numpy as np
-#Leaving this segment for when we want to import new scode spaces
+#Leaving this segment for when we want to import new code spaces
 
 def co_movements():
     """
@@ -28,17 +28,24 @@ def co_movements():
     
     Bilateral_movements = [
         {
-            "name" : "Riase",
-            "description": "Raise yopur hand and tap your nose"
+            "name" : "Clock Creation",
+            "description": "Using your hands.."
         },
         {
-            "name" : "lift",
-            "description": "Raise your hand and tap your head"
+            "name" : "Clock Replication",
+            "description": "Replicate the time ....pm"
         },
         {
-            "name" : "circle",
-            "description": "circle then midline"
+            "name" : "Taichi",
+            "description": "Certain form"
+        },
+        {
+            "name" : "Tap Nose",
+            "description": "Raise both hands and tap your nose"
         }
         
     ]
     return R_L_movements
+
+
+
