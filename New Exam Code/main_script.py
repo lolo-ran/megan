@@ -1,9 +1,8 @@
 import numpy as np
 import random
 import tkinter as tk
-
-from tkinter import messagebox
 import time
+from tkinter import messagebox
 from PIL import Image, ImageTk
 #Leaving this segment for when we want to import new code spaces
 
@@ -14,8 +13,8 @@ def co_movements():
     """
     R_L_movements = [
         {
-            "name" : "Riase",
-            "description": "Raise yopur hand and tap your nose"
+            "name" : "Raise",
+            "description": "Raise your hand and tap your nose"
         },
         {
             "name" : "lift",
@@ -226,6 +225,7 @@ stroop_test()
 #     #Function to handle the image click
 #     def on_image_click(index):
 #         if index == randomized_indices[odd_one_index]:
+
 #             messagebox.showinfo("Result","Correct! You found the odd one out")
 #         else:
 #             messagebox.info("Result", "Incorrect. Try again")
@@ -265,7 +265,7 @@ def action_fluency_test():
 
     print("\nStart naming actions! Type each one and press Enter:")
     
-    while time.time() - start_time < 60:  # 60 seconds timer
+    while time.time() - start_time < 25:  # 60 seconds timer, but putting 25 to not waste time in testing
         action = input("Action: ").strip().lower()  # Capture the action
         if action:  # Only record non-empty inputs
             responses.append(action)
@@ -285,3 +285,4 @@ def action_fluency_test():
 
 # Run the test
 action_fluency_test()
+
