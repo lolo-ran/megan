@@ -1,7 +1,10 @@
 import numpy as np
 import random
 import tkinter as tk
+
+from tkinter import messagebox
 import time
+from PIL import Image, ImageTk
 #Leaving this segment for when we want to import new code spaces
 
 def co_movements():
@@ -197,3 +200,88 @@ def stroop_test():
 # Run the Stroop test
 stroop_test()
 
+
+# def odd_one_out_test():
+#     """
+#     #A test where the subject selects the odd one out of a set of images
+#     """
+#     #setting up root window
+#     root = tk.Tk()
+#     root.title("Odd One Out Test")
+
+#     #Load images (Four different images in the same folder as the script)
+#     image_paths = []
+#     images = [Image.open(path).resize((100,100)) for path in image_paths]
+#     photo_images = [ImageTk.PhotoImage(img) for img in images]
+
+#     #Randomize the positions of images 
+#     odd_one_index = random.randit(0, 3)
+#     randomized_indices = list(range(4))
+#     random.shuffle(randomized_indices)
+
+#     #Create a frame to hold images
+#     frame = tk.Frame(root)
+#     frame.pack(pady=20)
+
+#     #Function to handle the image click
+#     def on_image_click(index):
+#         if index == randomized_indices[odd_one_index]:
+#             messagebox.showinfo("Result","Correct! You found the odd one out")
+#         else:
+#             messagebox.info("Result", "Incorrect. Try again")
+#         root.destroy()  # Close the test after the choice
+
+#      # Display the images in a grid
+#     for i, idx in enumerate(randomized_indices):
+#         button = tk.Button(
+#             frame,
+#             image=photo_images[idx],
+#             command=lambda index=i: on_image_click(index)
+#         )
+#         button.grid(row=i // 2, column=i % 2, padx=10, pady=10)
+
+#     # Add instructions
+#     instructions = tk.Label(root, text="Click on the odd one out!", font=("Helvetica", 16))
+#     instructions.pack(pady=10)
+
+#     # Run the application
+#     root.mainloop()
+# # Run the test
+# odd_one_out_test()
+
+def action_fluency_test():
+    """
+    A cognitive test for action fluency where the subject names as many single-word actions as possible in 60 seconds.
+    """
+
+    print("\n--- Action Fluency Test ---")
+    print("You will have 60 seconds to name as many single-word actions (verbs) as possible.")
+    print("Example: run, jump, eat, etc.")
+    input("\nPress Enter to start...")
+
+    # Start the test
+    start_time = time.time()
+    responses = []
+
+    print("\nStart naming actions! Type each one and press Enter:")
+    
+    while time.time() - start_time < 60:  # 60 seconds timer
+        action = input("Action: ").strip().lower()  # Capture the action
+        if action:  # Only record non-empty inputs
+            responses.append(action)
+
+    # End the test
+    print("\nTime's up!")
+    print(f"\nYou named {len(responses)} actions in 60 seconds.")
+    
+    # Remove duplicates and display unique actions
+    unique_responses = set(responses)
+    print(f"\nUnique actions ({len(unique_responses)}): {', '.join(unique_responses)}")
+    
+    # Optional: Count duplicates
+    duplicate_count = len(responses) - len(unique_responses)
+    if duplicate_count > 0:
+        print(f"Duplicate entries: {duplicate_count}")
+
+# Run the test
+action_fluency_test()
