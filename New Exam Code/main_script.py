@@ -200,54 +200,60 @@ def stroop_test():
 stroop_test()
 
 
-# def odd_one_out_test():
-#     """
-#     #A test where the subject selects the odd one out of a set of images
-#     """
-#     #setting up root window
-#     root = tk.Tk()
-#     root.title("Odd One Out Test")
+def odd_one_out_test():
+    """
+    #A test where the subject selects the odd one out of a set of images
+    """
+    #setting up root window
+    root = tk.Tk()
+    root.title("Odd One Out Test")
 
-#     #Load images (Four different images in the same folder as the script)
-#     image_paths = []
-#     images = [Image.open(path).resize((100,100)) for path in image_paths]
-#     photo_images = [ImageTk.PhotoImage(img) for img in images]
+    #Load images (Four different images in the same folder as the script)
+    image_paths = [
+    "test_1.jpg",
+    "test_2.png",
+    "test_3.png",
+    "test_4.png"
+]
+    # image_paths = ["Test images"]
+    images = [Image.open(path).resize((100,100)) for path in image_paths]
+    photo_images = [ImageTk.PhotoImage(img) for img in images]
 
-#     #Randomize the positions of images 
-#     odd_one_index = random.randit(0, 3)
-#     randomized_indices = list(range(4))
-#     random.shuffle(randomized_indices)
+    #Randomize the positions of images 
+    odd_one_index = random.randint(0, 3)
+    randomized_indices = list(range(4))
+    random.shuffle(randomized_indices)
 
-#     #Create a frame to hold images
-#     frame = tk.Frame(root)
-#     frame.pack(pady=20)
+    #Create a frame to hold images
+    frame = tk.Frame(root)
+    frame.pack(pady=20)
 
-#     #Function to handle the image click
-#     def on_image_click(index):
-#         if index == randomized_indices[odd_one_index]:
+    #Function to handle the image click
+    def on_image_click(index):
+        if index == randomized_indices[odd_one_index]:
 
-#             messagebox.showinfo("Result","Correct! You found the odd one out")
-#         else:
-#             messagebox.info("Result", "Incorrect. Try again")
-#         root.destroy()  # Close the test after the choice
+            messagebox.showinfo("Result","Correct! You found the odd one out")
+        else:
+            messagebox.info("Result", "Incorrect. Try again")
+        root.destroy()  # Close the test after the choice
 
-#      # Display the images in a grid
-#     for i, idx in enumerate(randomized_indices):
-#         button = tk.Button(
-#             frame,
-#             image=photo_images[idx],
-#             command=lambda index=i: on_image_click(index)
-#         )
-#         button.grid(row=i // 2, column=i % 2, padx=10, pady=10)
+     # Display the images in a grid
+    for i, idx in enumerate(randomized_indices):
+        button = tk.Button(
+            frame,
+            image=photo_images[idx],
+            command=lambda index=i: on_image_click(index)
+        )
+        button.grid(row=i // 2, column=i % 2, padx=10, pady=10)
 
-#     # Add instructions
-#     instructions = tk.Label(root, text="Click on the odd one out!", font=("Helvetica", 16))
-#     instructions.pack(pady=10)
+    # Add instructions
+    instructions = tk.Label(root, text="Click on the odd one out!", font=("Helvetica", 16))
+    instructions.pack(pady=10)
 
-#     # Run the application
-#     root.mainloop()
-# # Run the test
-# odd_one_out_test()
+    # Run the application
+    root.mainloop()
+# Run the test
+odd_one_out_test()
 
 def action_fluency_test():
     """
@@ -285,4 +291,3 @@ def action_fluency_test():
 
 # Run the test
 action_fluency_test()
-
