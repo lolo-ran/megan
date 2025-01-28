@@ -14,8 +14,8 @@ while True:
     data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
     if len(data) >= 4:
         received_float = struct.unpack('<f', data[:4])[0]  # <f for little-endian float
-            # Store the value in Streamlit's session state to persist across reruns
-            st.session_state.received_data = received_float
+        # Store the value in Streamlit's session state to persist across reruns
+        st.session_state.received_data = received_float
 
 # Start the UDP listener in a separate thread
 if 'received_data' not in st.session_state:
