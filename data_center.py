@@ -28,22 +28,20 @@ def decode_packet(data):
 while True:
     # Receive data (choose a buffer size that matches the data you're receiving)
     data, addr = sock.recvfrom(28)  
-    # Show received packet information in Streamlit (replaces print)
-    st.write(f"Received packet from {addr}")
     
-    # Decode the packet
-    decoded_values = decode_packet(data)
-    
-    # Show decoded values in Streamlit (replaces print)
-    st.write(f"Decoded values: {decoded_values}")
-
-    # Optionally, you can store the decoded values in a list to display in a table
-    packet_data.append(decoded_values)
-
-    # Show the last few packets in a table
-    if packet_data:
-        st.subheader("Decoded Packet Values")
-        st.dataframe(packet_data)
-
+    if len(data) == 28:
+        print(f"Received packet from {addr}")
         
+        # Unpack the data (we know the structure: 6 int16_t and 4 int)
+        # First unpack the 2-byte int16_t values (6 values)
+        x_accel, y_accel, z_accel, x_gyro, y_gyro, z_gyro = struct.unpack('<6h', data[:12])
+        # Then unpack the 4-byte int values (4 values)
+        read_1_0, read_1_1, read_2_0, read_2_1 = struct.unpack('<4i', data[12:])
         
+        # Print the unpacked data (you can process it as needed)
+        print(f"x_accel: {x_accel}, y_accel: {y_accel}, z_accel: {z_accel}")
+        print(f"x_gyro: {x_gyro}, y_gyro: {y_gyro}, z_gyro: {z_gyro}")
+        print(f"read_1_0: {read_1_0}, read_1_1: {read_1_1}")
+        print(f"read_2_0: {read_2_0}, read_2_1: {read_2_1}")
+    else:
+        print("Received packet of incorrect size")
