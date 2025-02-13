@@ -56,41 +56,79 @@ def co_movements():
 #Cognitive Exam 
 def recall_test():
     """
-    A recall test where a patient is shown a jumbled up sequence of letters and numbers.
-    the patient must reorder them in ascending order.
+    A recall test where a patient is shown a jumbled-up sequence of letters and numbers.
+    The patient must reorder them in ascending order by selecting them.
     """
 
     # Generate a random sequence of letters and numbers 
-    letters = random.sample('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 5) # Will pick 5 random letter
-    numbers = random.sample(range(10), 3) #3 random numbers
+    letters = random.sample('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 5)  # 5 random letters
+    numbers = random.sample(range(10), 3)  # 3 random numbers
     jumbled = letters + list(map(str, numbers))
-    random.shuffle(jumbled)
+    random.shuffle(jumbled)  # Shuffle to create randomness
 
-    print("\n-- Recall Test--")
-    print("Arrange the following characters in ascending order:")
-    print("Jumbled sequence:", " ".join(jumbled))
-
-    # Patient inputs their answer
-    patient_input = input("\nEnter your answer (separate items with spaces): ")#.strip()
-    patient_order = patient_input.split()
-    
-    #Create the correct answer
+    # Correct order
     correct_order = sorted(jumbled, key=lambda x: (x.isdigit(), x.upper()))
+    
+    # GUI Setup
+    root = tk.Tk()
+    root.title("Recall Test")
 
-    # Create the correct answer
-    total_items = len(correct_order)
-    correct_count = sum(1 for i, item in enumerate(patient_order) if i < total_items and item == correct_order[i])
-    accuracy = (correct_count / total_items) * 100
+    # Instructions
+    instructions = tk.Label(root, text="Select the characters in ascending order.", font=("Helvetica", 14))
+    instructions.pack(pady=10)
 
-    # Check the patient's response
-    if patient_order == correct_order:
-        print("\nCorrect! Great job!")
-    else:
-        print("\nIncorrect. The correct order is:", " ".join(correct_order))
-    print(f"Your accuracy: {accuracy:.2f}% ({correct_count}/{total_items} items correct)")
+    # Frame to display buttons
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=10)
+
+    # Patient selection list
+    selected_order = []
+
+    # Feedback Label
+    feedback_label = tk.Label(root, text="", font=("Helvetica", 12))
+    feedback_label.pack(pady=10)
+
+    def select_item(item, button):
+        """
+        Handles selection of items and disables buttons after selection.
+        """
+        if item not in selected_order and len(selected_order) < len(correct_order):
+            selected_order.append(item)
+            button.config(state=tk.DISABLED)  # Disable the button after selection
+
+            # If all selections are made, check correctness
+            if len(selected_order) == len(correct_order):
+                check_result()
+
+    def check_result():
+        """
+        Checks the selected order against the correct order and gives feedback.
+        """
+        correct_count = sum(1 for i, item in enumerate(selected_order) if item == correct_order[i])
+        accuracy = (correct_count / len(correct_order)) * 100
+
+        if selected_order == correct_order:
+            feedback_label.config(text=f"Correct! Accuracy: {accuracy:.2f}%", fg="green")
+        else:
+            feedback_label.config(text=f"Incorrect. The correct order is: {' '.join(correct_order)}\n"
+                                       f"Your accuracy: {accuracy:.2f}% ({correct_count}/{len(correct_order)} correct)",
+                                  fg="red")
+
+    # Create buttons for the jumbled characters
+    buttons = []
+    for item in jumbled:
+        button = tk.Button(button_frame, text=item, font=("Helvetica", 14),
+                           command=lambda item=item, button=None: select_item(item, button))
+        button.pack(side=tk.LEFT, padx=5, pady=5)
+        buttons.append(button)
+        buttons[-1].config(command=lambda item=item, button=buttons[-1]: select_item(item, button))
+
+    # Run the GUI application
+    root.mainloop()
 
 # Run the test
 recall_test()
+
 
 def stroop_test():
     """
@@ -255,39 +293,109 @@ def odd_one_out_test():
 # Run the test
 odd_one_out_test()
 
+import tkinter as tk
+import time
+import random
+
 def action_fluency_test():
     """
-    A cognitive test for action fluency where the subject names as many single-word actions as possible in 60 seconds.
+    A cognitive test for action fluency where the subject selects as many single-word actions (verbs) as possible in 25 seconds.
+    Some words are distractors (not verbs).
     """
 
-    print("\n--- Action Fluency Test ---")
-    print("You will have 60 seconds to name as many single-word actions (verbs) as possible.")
-    print("Example: run, jump, eat, etc.")
-    input("\nPress Enter to start...")
+    # List of possible words (both verbs and non-verbs)
+    action_words = ["run", "jump", "eat", "swim", "read", "write", "dance", "sing", "climb", "kick", "throw", "laugh", "cry"]
+    distractor_words = ["chair", "table", "tooth", "cloud", "pencil", "shoe", "tree", "lamp", "pillow", "bottle"]
 
-    # Start the test
+    # Mix the action words with some distractors
+    all_words = action_words + random.sample(distractor_words, 5)  # Add 5 random distractors
+    random.shuffle(all_words)  # Shuffle the list
+
+    # GUI Setup
+    root = tk.Tk()
+    root.title("Action Fluency Test")
+    root.geometry("450x350")
+
+    # Instructions
+    instructions = tk.Label(root, text="Select as many ACTION words (verbs) as possible in 25 seconds!", 
+                            font=("Helvetica", 14), wraplength=400)
+    instructions.pack(pady=10)
+
+    # Frame for word buttons
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=10)
+
+    # Timer Label
+    timer_label = tk.Label(root, text="Time Left: 25s", font=("Helvetica", 12))
+    timer_label.pack(pady=5)
+
+    # Feedback Label
+    feedback_label = tk.Label(root, text="", font=("Helvetica", 12))
+    feedback_label.pack(pady=5)
+
+    # Selected actions list
+    selected_actions = []
+    correct_selections = 0
+    incorrect_selections = 0
     start_time = time.time()
-    responses = []
 
-    print("\nStart naming actions! Type each one and press Enter:")
-    
-    while time.time() - start_time < 25:  # 60 seconds timer, but putting 25 to not waste time in testing
-        action = input("Action: ").strip().lower()  # Capture the action
-        if action:  # Only record non-empty inputs
-            responses.append(action)
+    def update_timer():
+        """
+        Updates the timer and ends the test when time runs out.
+        """
+        time_left = 25 - int(time.time() - start_time)
+        if time_left > 0:
+            timer_label.config(text=f"Time Left: {time_left}s")
+            root.after(1000, update_timer)  # Update every second
+        else:
+            end_test()
 
-    # End the test
-    print("\nTime's up!")
-    print(f"\nYou named {len(responses)} actions in 60 seconds.")
-    
-    # Remove duplicates and display unique actions
-    unique_responses = set(responses)
-    print(f"\nUnique actions ({len(unique_responses)}): {', '.join(unique_responses)}")
-    
-    # Optional: Count duplicates
-    duplicate_count = len(responses) - len(unique_responses)
-    if duplicate_count > 0:
-        print(f"Duplicate entries: {duplicate_count}")
+    def select_action(word, button):
+        """
+        Handles the selection of words.
+        """
+        nonlocal correct_selections, incorrect_selections
+
+        if word not in selected_actions:
+            selected_actions.append(word)
+            button.config(state=tk.DISABLED)  # Disable button after selection
+
+            if word in action_words:
+                correct_selections += 1
+            else:
+                incorrect_selections += 1
+
+    def end_test():
+        """
+        Ends the test and shows the results.
+        """
+        accuracy = (correct_selections / len(action_words)) * 100
+
+        result_message = (f"Test Over!\nYou selected {len(selected_actions)} words.\n"
+                          f"Correct actions: {correct_selections}/{len(action_words)}\n"
+                          f"Incorrect selections: {incorrect_selections}\n"
+                          f"Accuracy: {accuracy:.2f}%")
+
+        feedback_label.config(text=result_message, fg="blue")
+        
+        # Disable all buttons
+        for button in buttons:
+            button.config(state=tk.DISABLED)
+
+    # Create buttons for available words
+    buttons = []
+    for word in all_words:
+        button = tk.Button(button_frame, text=word, font=("Helvetica", 12),
+                           command=lambda w=word, btn=None: select_action(w, btn))
+        button.pack(side=tk.LEFT, padx=5, pady=5)
+        buttons.append(button)
+        buttons[-1].config(command=lambda w=word, btn=buttons[-1]: select_action(w, btn))
+
+    # Start the timer
+    update_timer()
+
+    # Run the GUI application
+    root.mainloop()
 
 # Run the test
 action_fluency_test()
