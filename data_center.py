@@ -10,9 +10,6 @@ st.title('UDP Data Hub')
 UDP_IP = "66.179.241.81"
 UDP_PORT = 5005
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind((UDP_IP, UDP_PORT))
-
 # Initialize session state for logging control
 if 'logging' not in st.session_state:
     st.session_state.logging = False
@@ -22,13 +19,22 @@ csv_filename = "sensor_data.csv"
 
 # Button to start logging data
 if st.button("Start Logging"):
-    st.session_state.logging = True
-    st.success("Logging started.")
+    if not st.session_state.logging:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.bind((UDP_IP, UDP_PORT))
+        st.session_state.logging = True
+        st.success("Logging started.")
+    else:
+        st.warning("Logging already started.")
 
 # Button to stop logging data
 if st.button("Stop Logging"):
-    st.session_state.logging = False
-    st.success("Logging stopped.")
+    if st.session_state.logging:
+        sock.close()
+        st.session_state.logging = False
+        st.success("Logging stopped.")
+    else
+        st.warning("No logging in process.")
 
 # Handle 
 while True:
