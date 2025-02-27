@@ -38,14 +38,14 @@ if st.button("Stop Logging"):
 
 if st.session_state.logging:
     # Open CSV file in append mode, create if not exists
-     with open(csv_filename, mode='a', newline='') as csv_file:
+    with open(csv_filename, mode='a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
             
-         # Write header if file is empty (to avoid duplicate headers)
-         if csv_file.tell() == 0:
-             csv_writer.writerow([
+        # Write header if file is empty (to avoid duplicate headers)
+        if csv_file.tell() == 0:
+            csv_writer.writerow([
                 "timestamp", "x_accel", "y_accel", "z_accel", "x_gyro", "y_gyro", "z_gyro", "x_mag", "y_mag", "z_mag",
-                 "read_1_0", "read_1_1", "read_1_2", "read_1_3", "read_1_4", "read_1_5", "read_1_6", "read_1_7",
+                "read_1_0", "read_1_1", "read_1_2", "read_1_3", "read_1_4", "read_1_5", "read_1_6", "read_1_7",
                 "read_2_0", "read_2_1", "read_2_2", "read_2_3", "read_2_4", "read_2_5", "read_2_6", "read_2_7",
                 "read_3_0", "read_3_1", "read_3_2", "read_3_3", "read_3_4", "read_3_5", "read_3_6", "read_3_7"
             ])
