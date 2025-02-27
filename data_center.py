@@ -33,7 +33,7 @@ if st.button("Stop Logging"):
         sock.close()
         st.session_state.logging = False
         st.success("Logging stopped.")
-    else
+    else:
         st.warning("No logging in process.")
 
 # Handle 
