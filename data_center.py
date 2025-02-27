@@ -23,6 +23,7 @@ if st.button("Start Logging"):
     if not st.session_state.logging:
         if sock == None:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Enable address reuse
             sock.bind((UDP_IP, UDP_PORT))
         st.session_state.logging = True
         st.success("Logging started.")
