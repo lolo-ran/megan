@@ -9,6 +9,7 @@ st.title('UDP Data Hub')
 # SET UP UDP SOCKET
 UDP_IP = "66.179.241.81"
 UDP_PORT = 5005
+sock = None
 
 # Initialize session state for logging control
 if 'logging' not in st.session_state:
