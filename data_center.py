@@ -21,8 +21,9 @@ csv_filename = "sensor_data.csv"
 # Button to start logging data
 if st.button("Start Logging"):
     if not st.session_state.logging:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind((UDP_IP, UDP_PORT))
+        if sock == None:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.bind((UDP_IP, UDP_PORT))
         st.session_state.logging = True
         st.success("Logging started.")
     else:
