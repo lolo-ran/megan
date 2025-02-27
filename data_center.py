@@ -46,7 +46,7 @@ if st.session_state.logging:
             ])
 
     # Receive data (choose a buffer size that matches the data you're receiving)
-    data, addr = sock.recvfrom(28)  
+    data, addr = sock.recvfrom(108)  
 
     while st.session_state.logging:
         if len(data) == 108:
