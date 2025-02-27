@@ -31,7 +31,7 @@ if st.button("Stop Logging"):
     st.success("Logging stopped.")
 
 # Handle logging
-if st.session_state.logging:
+while st.session_state.logging:
     # Open CSV file in append mode, create if not exists
     with open(csv_filename, mode='a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
