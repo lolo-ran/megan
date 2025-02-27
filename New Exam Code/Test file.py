@@ -1,29 +1,35 @@
 import tkinter as tk
 import time
 import random
+import tkinter as tk
+import random
+
+
 
 def action_fluency_test():
     """
     A cognitive test for action fluency where the subject selects as many single-word actions (verbs) as possible in 25 seconds.
-    Some words are distractors (not verbs).
+    Some words are distractors (not verbs). Now includes row and column numbers (1-5).
     """
 
     # List of possible words (both verbs and non-verbs)
-    action_words = ["run", "jump", "eat", "swim", "read", "write", "dance", "sing", "climb", "kick", "throw", "laugh", "cry"]
-    distractor_words = ["chair", "table", "tooth", "cloud", "pencil", "shoe", "tree", "lamp", "pillow", "bottle"]
+    action_words = ["run", "jump", "eat", "swim", "read", "write", "dance", "sing", "climb", "kick", 
+                    "throw", "laugh", "cry", "hop", "shout"]
+    distractor_words = ["chair", "table", "tooth", "cloud", "pencil", "shoe", "tree", "lamp", 
+                        "pillow", "bottle", "bicycle", "bird", "phone", "clock", "window"]
 
     # Mix the action words with some distractors
-    all_words = action_words + random.sample(distractor_words, 5)  # Add 5 random distractors
+    all_words = action_words + random.sample(distractor_words, 10)  # Ensure 25 total words
     random.shuffle(all_words)  # Shuffle the list
 
     # GUI Setup
     root = tk.Tk()
     root.title("Action Fluency Test")
-    root.geometry("450x350")
+    root.geometry("650x550")
 
     # Instructions
     instructions = tk.Label(root, text="Select as many ACTION words (verbs) as possible in 25 seconds!", 
-                            font=("Helvetica", 14), wraplength=400)
+                            font=("Times New Roman", 16), wraplength=600)
     instructions.pack(pady=10)
 
     # Frame for word buttons
@@ -31,12 +37,12 @@ def action_fluency_test():
     button_frame.pack(pady=10)
 
     # Timer Label
-    timer_label = tk.Label(root, text="Time Left: 25s", font=("Helvetica", 12))
+    timer_label = tk.Label(root, text="Time Left: 25s", font=("Times New Roman", 14))
     timer_label.pack(pady=5)
 
     # Feedback Label
-    feedback_label = tk.Label(root, text="", font=("Helvetica", 12))
-    feedback_label.pack(pady=5)
+    feedback_label = tk.Label(root, text="", font=("Times New Roman", 14))
+    feedback_label.pack(pady=10)
 
     # Selected actions list
     selected_actions = []
@@ -87,14 +93,26 @@ def action_fluency_test():
         for button in buttons:
             button.config(state=tk.DISABLED)
 
-    # Create buttons for available words
+    # Create labels for row and column numbers
+    for i in range(5):  # Row numbers
+        row_label = tk.Label(button_frame, text=str(i + 1), font=("Times New Roman", 20))
+        row_label.grid(row=i + 1, column=0, padx=5, pady=5)  # Shift down by 1 to avoid overlap
+
+    for j in range(5):  # Column numbers
+        col_label = tk.Label(button_frame, text=str(j + 1), font=("Times New Roman", 20))
+        col_label.grid(row=0, column=j + 1, padx=5, pady=5)  # Shift right by 1 to avoid overlap
+
+    # Create buttons for available words in a 5x5 matrix
     buttons = []
-    for word in all_words:
-        button = tk.Button(button_frame, text=word, font=("Helvetica", 12),
-                           command=lambda w=word, btn=None: select_action(w, btn))
-        button.pack(side=tk.LEFT, padx=5, pady=5)
-        buttons.append(button)
-        buttons[-1].config(command=lambda w=word, btn=buttons[-1]: select_action(w, btn))
+    for i in range(5):  # Rows
+        for j in range(5):  # Columns
+            word = all_words[i * 5 + j]  # Get the word at index
+            button = tk.Button(button_frame, text=word, font=("Times New Roman", 25),
+                               width=10, height=2,
+                               command=lambda w=word, btn=None: select_action(w, btn))
+            button.grid(row=i + 1, column=j + 1, padx=5, pady=5)  # Offset by 1 to fit row/col numbers
+            buttons.append(button)
+            buttons[-1].config(command=lambda w=word, btn=buttons[-1]: select_action(w, btn))
 
     # Start the timer
     update_timer()
