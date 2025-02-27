@@ -49,7 +49,7 @@ if st.session_state.logging:
     data, addr = sock.recvfrom(28)  
 
     while st.session_state.logging:
-        if len(data) == 94:
+        if len(data) == 108:
             st.write(f"Received packet from {addr}")
             
             # Unpack the data (we know the structure: 6 int16_t and 24 int)
