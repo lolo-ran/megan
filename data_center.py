@@ -72,4 +72,5 @@ if st.session_state.logging:
             else:
                 st.write("Received packet of incorrect size")
 
-        sock.close()
+    sock.close()
+    sock = None
