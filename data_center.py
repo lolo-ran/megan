@@ -3,77 +3,145 @@ import socket
 import struct
 import csv
 from datetime import datetime
+import time
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
 
-st.title('UDP Data Hub')
+st.set_page_config(page_title="Live Sensor Dashboard", layout="wide")
+st.title("🔴 Live Sensor Dashboard")
 
-# SET UP UDP SOCKET
+# UDP Configuration
 UDP_IP = "66.179.241.81"
 UDP_PORT = 5005
-sock = None
+BUFFER_SIZE = 114
+CSV_FILE = "sensor_data.csv"
+WINDOW_SIZE = 100
 
-# Initialize session state for logging control
-if 'logging' not in st.session_state:
+# Initialize session state
+if "sock" not in st.session_state:
+    st.session_state.sock = None
+if "data_buffer" not in st.session_state:
+    st.session_state.data_buffer = []
+if "chart_data" not in st.session_state:
+    st.session_state.chart_data = {
+        "timestamps": [],
+        "x_accel": [],
+        "y_accel": [],
+        "z_accel": [],
+    }
+if "logging" not in st.session_state:
     st.session_state.logging = False
 
-# Open CSV file in append mode, create if not exists
-csv_filename = "sensor_data.csv"
+# Sidebar for export
+with st.sidebar:
+    st.subheader("📤 Export")
+    if os.path.exists(CSV_FILE):
+        with open(CSV_FILE, "r") as f:
+            st.download_button("Download CSV Log", data=f, file_name=CSV_FILE, mime="text/csv")
+    else:
+        st.info("No CSV file available yet.")
 
-# Button to start logging data
-if st.button("Start Logging"):
-    if not st.session_state.logging:
-        if sock == None:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Enable address reuse
-            sock.bind((UDP_IP, UDP_PORT))
-        st.session_state.logging = True
-        st.success("Logging started.")
-        with open(csv_filename, mode='a', newline='') as csv_file:
+# Start / Stop buttons
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("▶️ Start Logging"):
+        if not st.session_state.logging:
+            st.session_state.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            st.session_state.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            st.session_state.sock.settimeout(0.1)
+            st.session_state.sock.bind((UDP_IP, UDP_PORT))
+            st.session_state.logging = True
+            st.success("✅ Logging started.")
+
+with col2:
+    if st.button("⏹ Stop Logging"):
+        if st.session_state.logging:
+            st.session_state.logging = False
+            if st.session_state.sock:
+                st.session_state.sock.close()
+                st.session_state.sock = None
+            st.success("🛑 Logging stopped.")
+
+# Live sensor display placeholders
+accel_display = st.empty()
+gyro_display = st.empty()
+mag_display = st.empty()
+grid_display = st.empty()
+chart_display = st.empty()
+
+# Data reading function
+def read_udp_data():
+    try:
+        data, addr = st.session_state.sock.recvfrom(BUFFER_SIZE)
+        if len(data) != BUFFER_SIZE:
+            return
+
+        # Unpack data
+        x_accel, y_accel, z_accel, x_gyro, y_gyro, z_gyro, x_mag, y_mag, z_mag = struct.unpack('<9h', data[:18])
+        readings = struct.unpack('<24i', data[18:])
+        row1 = readings[0:8]
+        row2 = readings[8:16]
+        row3 = readings[16:24]
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Append to CSV
+        write_header = not os.path.exists(CSV_FILE)
+        with open(CSV_FILE, mode="a", newline="") as csv_file:
             csv_writer = csv.writer(csv_file)
-            
-            # Write header if file is empty (to avoid duplicate headers)
-            if csv_file.tell() == 0:
-                csv_writer.writerow([
-                    "timestamp", "x_accel", "y_accel", "z_accel", "x_gyro", "y_gyro", "z_gyro", "x_mag", "y_mag", "z_mag",
-                    "read_1_0", "read_1_1", "read_1_2", "read_1_3", "read_1_4", "read_1_5", "read_1_6", "read_1_7",
-                    "read_2_0", "read_2_1", "read_2_2", "read_2_3", "read_2_4", "read_2_5", "read_2_6", "read_2_7",
-                    "read_3_0", "read_3_1", "read_3_2", "read_3_3", "read_3_4", "read_3_5", "read_3_6", "read_3_7"
-                ])
-    else:
-        st.warning("Logging already started.")
+            if write_header:
+                csv_writer.writerow(
+                    ["timestamp", "x_accel", "y_accel", "z_accel", "x_gyro", "y_gyro", "z_gyro",
+                     "x_mag", "y_mag", "z_mag"] + [f"read_{i//8+1}_{i%8}" for i in range(24)]
+                )
+            csv_writer.writerow([timestamp, x_accel, y_accel, z_accel, x_gyro, y_gyro, z_gyro,
+                                 x_mag, y_mag, z_mag] + list(readings))
 
-# Button to stop logging data
-if st.button("Stop Logging"):
-    if st.session_state.logging:
-        st.session_state.logging = False
-        st.success("Logging stopped.")
-    else:
-        st.warning("No logging in process.")
+        # Update session chart data
+        chart = st.session_state.chart_data
+        chart["timestamps"].append(timestamp)
+        chart["x_accel"].append(x_accel)
+        chart["y_accel"].append(y_accel)
+        chart["z_accel"].append(z_accel)
 
-if st.session_state.logging:
-    # Open CSV file in append mode, create if not exists
-    with open(csv_filename, mode='a', newline='') as csv_file:
-        csv_writer = csv.writer(csv_file)
-    
-        # Receive data (choose a buffer size that matches the data you're receiving)
-        data, addr = sock.recvfrom(114)  
-        
-        while st.session_state.logging:
-            if len(data) == 114:
-                st.write(f"Received packet from {addr}")
-                    
-                # Unpack the data (we know the structure: 9 int16_t and 24 int)
-                # First unpack the 2-byte int16_t values (9 values = 18 bytes)
-                x_accel, y_accel, z_accel, x_gyro, y_gyro, z_gyro, x_mag, y_mag, z_mag = struct.unpack('<9h', data[:18])
-                # Then unpack the 4-byte int values (24 values = 96 bytes)
-                read_1_0, read_1_1, read_1_2, read_1_3, read_1_4, read_1_5, read_1_6, read_1_7, read_2_0, read_2_1, read_2_2, read_2_3, read_2_4, read_2_5, read_2_6, read_2_7, read_3_0, read_3_1, read_3_2, read_3_3, read_3_4, read_3_5, read_3_6, read_3_7 = struct.unpack('<24i', data[18:])
-            
-                # Get current timestamp
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
-                # Write to CSV file
-                csv_writer.writerow([timestamp, x_accel, y_accel, z_accel, x_gyro, y_gyro, z_gyro, x_mag, y_mag, z_mag, read_1_0, read_1_1, read_1_2, read_1_3, read_1_4, read_1_5, read_1_6, read_1_7, read_2_0, read_2_1, read_2_2, read_2_3, read_2_4, read_2_5, read_2_6, read_2_7, read_3_0, read_3_1, read_3_2, read_3_3, read_3_4, read_3_5, read_3_6, read_3_7])
-            else:
-                st.write("Received packet of incorrect size")
+        for key in chart:
+            chart[key] = chart[key][-WINDOW_SIZE:]
 
-    sock.close()
-    sock = None
+        # Display live values
+        accel_display.markdown(f"**Accelerometer**: X: `{x_accel}` Y: `{y_accel}` Z: `{z_accel}`")
+        gyro_display.markdown(f"**Gyroscope**: X: `{x_gyro}` Y: `{y_gyro}` Z: `{z_gyro}`")
+        mag_display.markdown(f"**Magnetometer**: X: `{x_mag}` Y: `{y_mag}` Z: `{z_mag}`")
+        grid_display.markdown(f"**Sensor Grid:**\n\n`{row1}`\n\n`{row2}`\n\n`{row3}`")
+
+    except socket.timeout:
+        pass
+    except Exception as e:
+        st.error(f"UDP read error: {e}")
+
+# Run reader loop briefly on each rerun
+if st.session_state.logging and st.session_state.sock:
+    for _ in range(5):  # read a few packets per rerun
+        read_udp_data()
+
+    # Show chart
+    df = pd.DataFrame({
+        "Timestamp": st.session_state.chart_data["timestamps"],
+        "X": st.session_state.chart_data["x_accel"],
+        "Y": st.session_state.chart_data["y_accel"],
+        "Z": st.session_state.chart_data["z_accel"],
+    })
+
+    if not df.empty:
+        fig, ax = plt.subplots()
+        ax.plot(df["Timestamp"], df["X"], label="X Accel")
+        ax.plot(df["Timestamp"], df["Y"], label="Y Accel")
+        ax.plot(df["Timestamp"], df["Z"], label="Z Accel")
+        ax.legend()
+        ax.set_title("Accelerometer - Live")
+        ax.tick_params(axis='x', rotation=45)
+        chart_display.pyplot(fig)
+
+    # Auto-refresh
+    time.sleep(0.2)
+    st.rerun()
