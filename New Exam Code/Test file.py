@@ -1,133 +1,13 @@
-# import tkinter as tk
-# import time
-# import random
-# import tkinter as tk
-# import random
-
-
-
-# def action_fluency_test():
-#     """
-#     A cognitive test for action fluency where the subject selects as many single-word actions (verbs) as possible in 25 seconds.
-#     Some words are distractors (not verbs). Now includes row and column numbers (1-5).
-#     """
-
-#     # List of possible words (both verbs and non-verbs)
-#     action_words = ["run", "jump", "eat", "swim", "read", "write", "dance", "sing", "climb", "kick", 
-#                     "throw", "laugh", "cry", "hop", "shout"]
-#     distractor_words = ["chair", "table", "tooth", "cloud", "pencil", "shoe", "tree", "lamp", 
-#                         "pillow", "bottle", "bicycle", "bird", "phone", "clock", "window"]
-
-#     # Mix the action words with some distractors
-#     all_words = action_words + random.sample(distractor_words, 10)  # Ensure 25 total words
-#     random.shuffle(all_words)  # Shuffle the list
-
-#     # GUI Setup
-#     root = tk.Tk()
-#     root.title("Action Fluency Test")
-#     root.geometry("650x550")
-
-#     # Instructions
-#     instructions = tk.Label(root, text="Select as many ACTION words (verbs) as possible in 25 seconds!", 
-#                             font=("Times New Roman", 16), wraplength=600)
-#     instructions.pack(pady=10)
-
-#     # Frame for word buttons
-#     button_frame = tk.Frame(root)
-#     button_frame.pack(pady=10)
-
-#     # Timer Label
-#     timer_label = tk.Label(root, text="Time Left: 25s", font=("Times New Roman", 14))
-#     timer_label.pack(pady=5)
-
-#     # Feedback Label
-#     feedback_label = tk.Label(root, text="", font=("Times New Roman", 14))
-#     feedback_label.pack(pady=10)
-
-#     # Selected actions list
-#     selected_actions = []
-#     correct_selections = 0
-#     incorrect_selections = 0
-#     start_time = time.time()
-
-#     def update_timer():
-#         """
-#         Updates the timer and ends the test when time runs out.
-#         """
-#         time_left = 25 - int(time.time() - start_time)
-#         if time_left > 0:
-#             timer_label.config(text=f"Time Left: {time_left}s")
-#             root.after(1000, update_timer)  # Update every second
-#         else:
-#             end_test()
-
-#     def select_action(word, button):
-#         """
-#         Handles the selection of words.
-#         """
-#         nonlocal correct_selections, incorrect_selections
-
-#         if word not in selected_actions:
-#             selected_actions.append(word)
-#             button.config(state=tk.DISABLED)  # Disable button after selection
-
-#             if word in action_words:
-#                 correct_selections += 1
-#             else:
-#                 incorrect_selections += 1
-
-#     def end_test():
-#         """
-#         Ends the test and shows the results.
-#         """
-#         accuracy = (correct_selections / len(action_words)) * 100
-
-#         result_message = (f"Test Over!\nYou selected {len(selected_actions)} words.\n"
-#                           f"Correct actions: {correct_selections}/{len(action_words)}\n"
-#                           f"Incorrect selections: {incorrect_selections}\n"
-#                           f"Accuracy: {accuracy:.2f}%")
-
-#         feedback_label.config(text=result_message, fg="blue")
-        
-#         # Disable all buttons
-#         for button in buttons:
-#             button.config(state=tk.DISABLED)
-
-#     # Create labels for row and column numbers
-#     for i in range(5):  # Row numbers
-#         row_label = tk.Label(button_frame, text=str(i + 1), font=("Times New Roman", 20))
-#         row_label.grid(row=i + 1, column=0, padx=5, pady=5)  # Shift down by 1 to avoid overlap
-
-#     for j in range(5):  # Column numbers
-#         col_label = tk.Label(button_frame, text=str(j + 1), font=("Times New Roman", 20))
-#         col_label.grid(row=0, column=j + 1, padx=5, pady=5)  # Shift right by 1 to avoid overlap
-
-#     # Create buttons for available words in a 5x5 matrix
-#     buttons = []
-#     for i in range(5):  # Rows
-#         for j in range(5):  # Columns
-#             word = all_words[i * 5 + j]  # Get the word at index
-#             button = tk.Button(button_frame, text=word, font=("Times New Roman", 25),
-#                                width=10, height=2,
-#                                command=lambda w=word, btn=None: select_action(w, btn))
-#             button.grid(row=i + 1, column=j + 1, padx=5, pady=5)  # Offset by 1 to fit row/col numbers
-#             buttons.append(button)
-#             buttons[-1].config(command=lambda w=word, btn=buttons[-1]: select_action(w, btn))
-
-#     # Start the timer
-#     update_timer()
-
-#     # Run the GUI application
-#     root.mainloop()
-
-# # Run the test
-# action_fluency_test()
-
-
+import csv
+import json
+import time
 import cv2
 import numpy as np
 import mediapipe as mp
 import os
+
+# Data storage for positional information
+positional_data = []
 
 # Define the directory to save videos
 save_directory = 'videos'  # Changed to be in the current directory
@@ -172,6 +52,66 @@ finger_connections = {
     'pinky': [(17, 18), (18, 19), (19, 20)]
 }
 
+# Define export functions
+def export_to_json(data, filename):
+    """Export positional data to a JSON file."""
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=2)
+    print(f"Data exported to {filename}")
+
+def export_to_csv(data, filename):
+    """Export positional data to a CSV file (flattened structure)."""
+    # First, determine all possible columns by examining the data
+    columns = ['frame_number', 'timestamp']
+    
+    # Examine first frame with data to determine columns
+    for frame in data:
+        if frame.get('pose_landmarks'):
+            for landmark_name, values in frame['pose_landmarks'].items():
+                for value_name in values:
+                    columns.append(f"pose_{landmark_name}_{value_name}")
+            break
+    
+    # Add hand landmark columns (using a simplified approach)
+    columns.extend(['hand_0_type', 'hand_1_type'])
+    for i in range(21):  # 21 landmarks per hand
+        for coord in ['x', 'y', 'z']:
+            columns.extend([f'hand_0_landmark_{i}_{coord}', f'hand_1_landmark_{i}_{coord}'])
+    
+    # Write the CSV file
+    with open(filename, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=columns)
+        writer.writeheader()
+        
+        for frame in data:
+            row = {
+                'frame_number': frame['frame_number'],
+                'timestamp': frame['timestamp']
+            }
+            
+            # Add pose landmarks
+            if frame.get('pose_landmarks'):
+                for landmark_name, values in frame['pose_landmarks'].items():
+                    for value_name, value in values.items():
+                        row[f"pose_{landmark_name}_{value_name}"] = value
+            
+            # Add hand landmarks
+            for hand_idx, hand_data in enumerate(frame.get('hand_landmarks', [])):
+                if hand_idx > 1:  # Only support up to 2 hands
+                    continue
+                    
+                row[f'hand_{hand_idx}_type'] = hand_data.get('handedness', '')
+                
+                for landmark_idx, landmark_data in hand_data.get('landmarks', {}).items():
+                    for coord, value in landmark_data.items():
+                        column_name = f'hand_{hand_idx}_{landmark_idx}_{coord}'
+                        if column_name in columns:
+                            row[column_name] = value
+            
+            writer.writerow(row)
+    
+    print(f"Data exported to {filename}")
+
 # Initialize VideoCapture
 cap = cv2.VideoCapture(0)
 
@@ -208,6 +148,14 @@ while True:
     # Create a blank white image for graphics only
     blank_image = np.ones_like(frame) * 255
     
+    # Create frame data structure for this frame
+    frame_data = {
+        'timestamp': time.time(),
+        'frame_number': len(positional_data),
+        'pose_landmarks': {},
+        'hand_landmarks': []
+    }
+    
     if pose_results.pose_landmarks:
         # Draw arm landmarks and lines for the arms
         arm_landmarks_px = []
@@ -217,6 +165,15 @@ while True:
             arm_landmarks_px.append(landmark_px)
             cv2.circle(frame, landmark_px, 5, outline_color, -1)
             cv2.circle(blank_image, landmark_px, 5, outline_color, -1)
+            
+            # Store pose landmark data
+            landmark_name = mp_pose.PoseLandmark(landmark_idx).name
+            frame_data['pose_landmarks'][landmark_name] = {
+                'x': landmark.x,
+                'y': landmark.y,
+                'z': landmark.z,
+                'visibility': landmark.visibility
+            }
 
         # Draw lines connecting arm landmarks
         connections = [
@@ -266,12 +223,27 @@ while True:
         cv2.polylines(blank_image, [right_arm_points], isClosed=False, color=outline_color, thickness=2)
     
     if hand_results.multi_hand_landmarks:
-        for hand_landmarks_list in hand_results.multi_hand_landmarks:
-            hand_landmarks_px = []
-            for i, landmark_idx in enumerate(hand_landmarks):
-                landmark = hand_landmarks_list.landmark[landmark_idx]
+        for hand_idx, hand_landmarks_list in enumerate(hand_results.multi_hand_landmarks):
+            # Create hand data structure
+            hand_data = {
+                'hand_index': hand_idx,
+                'landmarks': {}
+            }
+            
+            # Get hand type (left or right) if available
+            if hand_results.multi_handedness and len(hand_results.multi_handedness) > hand_idx:
+                hand_data['handedness'] = hand_results.multi_handedness[hand_idx].classification[0].label
+            
+            for i, landmark in enumerate(hand_landmarks_list.landmark):
                 landmark_px = (int(landmark.x * width), int(landmark.y * height))
-                hand_landmarks_px.append(landmark_px)
+                
+                # Store hand landmark data
+                hand_data['landmarks'][f'landmark_{i}'] = {
+                    'x': landmark.x,
+                    'y': landmark.y,
+                    'z': landmark.z
+                }
+                
                 # Determine which finger the landmark belongs to
                 if 1 <= i <= 4:
                     finger = 'thumb'
@@ -286,6 +258,9 @@ while True:
                 # Draw landmarks with corresponding color
                 cv2.circle(frame, landmark_px, 5, finger_colors[finger], -1)
                 cv2.circle(blank_image, landmark_px, 5, finger_colors[finger], -1)
+            
+            # Add hand data to frame data
+            frame_data['hand_landmarks'].append(hand_data)
             
             # Draw lines connecting hand landmarks with corresponding color
             for finger, connections in finger_connections.items():
@@ -325,6 +300,10 @@ while True:
                 cv2.polylines(frame, [finger_points], isClosed=False, color=outline_color, thickness=2)
                 cv2.polylines(blank_image, [finger_points], isClosed=False, color=outline_color, thickness=2)
 
+    # Add the frame data to our collection if recording
+    if recording:
+        positional_data.append(frame_data)
+        
     # Display the frame with overlay
     cv2.imshow("Pose Detection - With Graphics", frame)
     cv2.imshow("Pose Detection - Graphics Only", blank_image)
@@ -343,6 +322,7 @@ while True:
     elif key == ord('r') and not recording:
         # Start recording
         recording = True
+        positional_data = []  # Reset data collection
         out_with_graphics = cv2.VideoWriter(os.path.join(save_directory, 'recording_with_graphics.mp4'), fourcc, 20.0, (width, height))
         out_graphics_only = cv2.VideoWriter(os.path.join(save_directory, 'recording_graphics_only.mp4'), fourcc, 20.0, (width, height))
         print("Recording started")
@@ -353,7 +333,15 @@ while True:
             out_with_graphics.release()
         if out_graphics_only:
             out_graphics_only.release()
-        print("Recording stopped")
+        
+        # Export the collected data
+        if positional_data:
+            json_path = os.path.join(save_directory, 'positional_data.json')
+            csv_path = os.path.join(save_directory, 'positional_data.csv')
+            export_to_json(positional_data, json_path)
+            export_to_csv(positional_data, csv_path)
+        
+        print("Recording stopped and data exported")
     
     # Check if the window was closed
     if cv2.getWindowProperty("Pose Detection - With Graphics", cv2.WND_PROP_VISIBLE) < 1:
