@@ -1,356 +1,466 @@
-import csv
-import json
-import time
-import cv2
 import numpy as np
-import mediapipe as mp
-import os
+import random
+import tkinter as tk
+import time
+from tkinter import messagebox
+from PIL import Image, ImageTk
+#Leaving this segment for when we want to import new code spaces
 
-# Data storage for positional information
-positional_data = []
+def wait_for_start(test_number):
+    start_input = input(f"Type 'Start test {test_number}' to begin: ")
+    while start_input.strip().lower() != f"start test {test_number}":
+        print("Incorrect input. Try again.")
+        start_input = input(f"Type 'Start test {test_number}' to begin: ")
 
-# Define the directory to save videos
-save_directory = 'videos'  # Changed to be in the current directory
-# Create the directory if it does not exist
-if not os.path.exists(save_directory):
-    os.makedirs(save_directory)
+def recall_test():
+    wait_for_start(1)
+    """
+    A recall test where a patient is shown a jumbled-up sequence of letters and numbers.
+    The patient must reorder them in ascending order by selecting them by letters A-Z first, then numbers 1-10.
+    Each item now has a corresponding index displayed below it.
+    """
 
-# Initialize MediaPipe Pose and Hands
-mp_pose = mp.solutions.pose
-mp_hands = mp.solutions.hands
-pose = mp_pose.Pose()
-hands = mp_hands.Hands()
-mp_drawing = mp.solutions.drawing_utils
+    # Generate a random sequence of letters and numbers 
+    letters = random.sample('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 5)  # 5 random letters
+    numbers = random.sample(range(10), 3)  # 3 random numbers
+    jumbled = letters + list(map(str, numbers))
+    random.shuffle(jumbled)  # Shuffle to create randomness
 
-# Define the indexes for arm landmarks from Pose solution
-pose_landmarks = [
-    mp_pose.PoseLandmark.LEFT_SHOULDER,
-    mp_pose.PoseLandmark.LEFT_ELBOW,
-    mp_pose.PoseLandmark.LEFT_WRIST,
-    mp_pose.PoseLandmark.RIGHT_SHOULDER,
-    mp_pose.PoseLandmark.RIGHT_ELBOW,
-    mp_pose.PoseLandmark.RIGHT_WRIST
-]
-
-# Define hand landmarks indexes and colors for each finger
-hand_landmarks = list(range(21))  # 21 landmarks for each hand
-outline_color = (0, 0, 0)  # Black for outlines
-finger_colors = {
-    'thumb': (0, 128, 255),  # Dark Orange
-    'index': (0, 0, 255),    # Red
-    'middle': (0, 255, 0),   # Green
-    'ring': (255, 0, 0),     # Blue
-    'pinky': (255, 20, 147)  # Deep Pink
-}
-
-# Define finger connections and corresponding colors
-finger_connections = {
-    'thumb': [(1, 2), (2, 3), (3, 4)],
-    'index': [(5, 6), (6, 7), (7, 8)],
-    'middle': [(9, 10), (10, 11), (11, 12)],
-    'ring': [(13, 14), (14, 15), (15, 16)],
-    'pinky': [(17, 18), (18, 19), (19, 20)]
-}
-
-# Define export functions
-def export_to_json(data, filename):
-    """Export positional data to a JSON file."""
-    with open(filename, 'w') as f:
-        json.dump(data, f, indent=2)
-    print(f"Data exported to {filename}")
-
-def export_to_csv(data, filename):
-    """Export positional data to a CSV file (flattened structure)."""
-    # First, determine all possible columns by examining the data
-    columns = ['frame_number', 'timestamp']
+    # Correct order: Letters first (A-Z), then numbers (ascending)
+    correct_order = sorted(jumbled, key=lambda x: (x.isdigit(), x.upper()))
     
-    # Examine first frame with data to determine columns
-    for frame in data:
-        if frame.get('pose_landmarks'):
-            for landmark_name, values in frame['pose_landmarks'].items():
-                for value_name in values:
-                    columns.append(f"pose_{landmark_name}_{value_name}")
-            break
-    
-    # Add hand landmark columns (using a simplified approach)
-    columns.extend(['hand_0_type', 'hand_1_type'])
-    for i in range(21):  # 21 landmarks per hand
-        for coord in ['x', 'y', 'z']:
-            columns.extend([f'hand_0_landmark_{i}_{coord}', f'hand_1_landmark_{i}_{coord}'])
-    
-    # Write the CSV file
-    with open(filename, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=columns)
-        writer.writeheader()
+    # Assign numbers (1 to 8) under each item
+    numbered_items = {item: str(i + 1) for i, item in enumerate(jumbled)}
+
+    # GUI Setup
+    root = tk.Tk()
+    root.title("Recall Test")
+    root.geometry("500x300")
+
+    # Instructions
+    instructions = tk.Label(root, text="Select the characters in ascending order (A-Z first, then numbers).", font=("Helvetica", 14))
+    instructions.pack(pady=10)
+
+    # Frame to display buttons
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=10)
+
+    # Patient selection list
+    selected_order = []
+
+    # Feedback Label
+    feedback_label = tk.Label(root, text="", font=("Times New Roman", 20))
+    feedback_label.pack(pady=10)
+
+    def select_item(item, button):
+        """
+        Handles selection of items and disables buttons after selection.
+        """
+        if item not in selected_order and len(selected_order) < len(correct_order):
+            selected_order.append(item)
+            button.config(state=tk.DISABLED)  # Disable the button after selection
+
+            # If all selections are made, check correctness
+            if len(selected_order) == len(correct_order):
+                check_result()
+
+    def check_result():
+        """
+        Checks the selected order against the correct order and gives feedback.
+        """
+        correct_count = sum(1 for i, item in enumerate(selected_order) if item == correct_order[i])
+        accuracy = (correct_count / len(correct_order)) * 100
+
+        if selected_order == correct_order:
+            feedback_label.config(text=f"Correct! Accuracy: {accuracy:.2f}%", fg="green")
+        else:
+            feedback_label.config(text=f"Incorrect. The correct order is: {' '.join(correct_order)}\n"
+                                       f"Your accuracy: {accuracy:.2f}% ({correct_count}/{len(correct_order)} correct)",
+                                  fg="red")
+
+    # Create buttons with numbers underneath
+    buttons = []
+    for item in jumbled:
+        # Create a frame for each letter/number and its index
+        item_frame = tk.Frame(button_frame)
+        item_frame.pack(side=tk.LEFT, padx=10, pady=5)
+
+        # Button for selecting the item
+        button = tk.Button(item_frame, text=item, font=("Helvetica", 14),
+                           command=lambda item=item, button=None: select_item(item, button))
+        button.pack()
+
+        # Label showing the assigned number below the item
+        index_label = tk.Label(item_frame, text=numbered_items[item], font=("Helvetica", 12))
+        index_label.pack()
+
+        # Store the button for later reference
+        buttons.append(button)
+        buttons[-1].config(command=lambda item=item, button=buttons[-1]: select_item(item, button))
+
+    # Run the GUI application
+    root.mainloop()
+
+# Run the test
+recall_test()
+
+
+def wait_for_start(test_number):
+    start_input = input(f"Type 'Start test {test_number}' to begin: ")
+    while start_input.strip().lower() != f"start test {test_number}":
+        print("Incorrect input. Try again.")
+        start_input = input(f"Type 'Start test {test_number}' to begin: ")
         
-        for frame in data:
-            row = {
-                'frame_number': frame['frame_number'],
-                'timestamp': frame['timestamp']
-            }
-            
-            # Add pose landmarks
-            if frame.get('pose_landmarks'):
-                for landmark_name, values in frame['pose_landmarks'].items():
-                    for value_name, value in values.items():
-                        row[f"pose_{landmark_name}_{value_name}"] = value
-            
-            # Add hand landmarks
-            for hand_idx, hand_data in enumerate(frame.get('hand_landmarks', [])):
-                if hand_idx > 1:  # Only support up to 2 hands
-                    continue
-                    
-                row[f'hand_{hand_idx}_type'] = hand_data.get('handedness', '')
-                
-                for landmark_idx, landmark_data in hand_data.get('landmarks', {}).items():
-                    for coord, value in landmark_data.items():
-                        column_name = f'hand_{hand_idx}_{landmark_idx}_{coord}'
-                        if column_name in columns:
-                            row[column_name] = value
-            
-            writer.writerow(row)
-    
-    print(f"Data exported to {filename}")
+def stroop_test():
+    wait_for_start(2)
+    """
+    A stroop test where the subject/patient is asked to sat the color of the text, not the word itself.
+    Initial test will have the color and text match, moves onto a mismatched vesion.
+    Colors being red, blue, green, brown
+    """
 
-# Initialize VideoCapture
-cap = cv2.VideoCapture(0)
+    #Setting up root window
+    root = tk.Tk()
+    root.title("Stroop Test")
 
-# Initialize VideoWriters for output
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out_with_graphics = None
-out_graphics_only = None
-recording = False
-print("Press 'r' to start recording and 's' to stop recording. Press 'ESC' or close the window to exit.")
+    #Define the colors and words
+    colors = ["RED", "BLUE", "GREEN", "BROWN"]
+    text_colors = {"GREEN":"green", "RED": "red", "BLUE": "blue", "BROWN": "brown"}
 
-def interpolate_points(start, end, num_points=5):
-    """Interpolate additional points between start and end."""
-    start = np.array(start)
-    end = np.array(end)
-    return [(start + (end - start) * t / num_points).astype(int) for t in range(num_points + 1)]
+    # Create a label to display instructions
+    instructions = tk.Label(root, text="Say the COLOR of the text, not the word!", font=("Helvetica", 16))
+    instructions.pack(pady=10)
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("Failed to grab frame")
-        break
-    
-    # Flip the image horizontally for a later selfie-view display
-    frame = cv2.flip(frame, 1)
-    height, width, _ = frame.shape
-    
-    # Convert the BGR image to RGB
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
-    # Process the image and find poses and hands
-    pose_results = pose.process(rgb_frame)
-    hand_results = hands.process(rgb_frame)
-    
-    # Create a blank white image for graphics only
-    blank_image = np.ones_like(frame) * 255
-    
-    # Create frame data structure for this frame
-    frame_data = {
-        'timestamp': time.time(),
-        'frame_number': len(positional_data),
-        'pose_landmarks': {},
-        'hand_landmarks': []
+    # Create a label to display the text
+    word_label = tk.Label(root, text="", font=("Helvetica", 32))
+    word_label.pack(pady=20)
+
+    # Create a start button
+    start_button = tk.Button(root, text="Start Test", font=("Helvetica", 14), command=lambda: start_stroop_test())
+    start_button.pack(pady=10)
+
+    # Test state
+    test_data = {
+        "current_phase": 0,  # 0 = matching, 1 = mismatching
+        "current_word": "",
+        "current_color": "",
+        "score": 0,
+        "total_attempts": 0,
+        "start_time": None
     }
-    
-    if pose_results.pose_landmarks:
-        # Draw arm landmarks and lines for the arms
-        arm_landmarks_px = []
-        for landmark_idx in pose_landmarks:
-            landmark = pose_results.pose_landmarks.landmark[landmark_idx]
-            landmark_px = (int(landmark.x * width), int(landmark.y * height))
-            arm_landmarks_px.append(landmark_px)
-            cv2.circle(frame, landmark_px, 5, outline_color, -1)
-            cv2.circle(blank_image, landmark_px, 5, outline_color, -1)
-            
-            # Store pose landmark data
-            landmark_name = mp_pose.PoseLandmark(landmark_idx).name
-            frame_data['pose_landmarks'][landmark_name] = {
-                'x': landmark.x,
-                'y': landmark.y,
-                'z': landmark.z,
-                'visibility': landmark.visibility
-            }
 
-        # Draw lines connecting arm landmarks
-        connections = [
-            (mp_pose.PoseLandmark.LEFT_SHOULDER, mp_pose.PoseLandmark.LEFT_ELBOW),
-            (mp_pose.PoseLandmark.LEFT_ELBOW, mp_pose.PoseLandmark.LEFT_WRIST),
-            (mp_pose.PoseLandmark.RIGHT_SHOULDER, mp_pose.PoseLandmark.RIGHT_ELBOW),
-            (mp_pose.PoseLandmark.RIGHT_ELBOW, mp_pose.PoseLandmark.RIGHT_WRIST),
-        ]
-        for start_idx, end_idx in connections:
-            cv2.line(frame,
-                    (int(pose_results.pose_landmarks.landmark[start_idx].x * width),
-                    int(pose_results.pose_landmarks.landmark[start_idx].y * height)),
-                    (int(pose_results.pose_landmarks.landmark[end_idx].x * width),
-                    int(pose_results.pose_landmarks.landmark[end_idx].y * height)),
-                    outline_color, 2)
-            cv2.line(blank_image,
-                    (int(pose_results.pose_landmarks.landmark[start_idx].x * width),
-                    int(pose_results.pose_landmarks.landmark[start_idx].y * height)),
-                    (int(pose_results.pose_landmarks.landmark[end_idx].x * width),
-                    int(pose_results.pose_landmarks.landmark[end_idx].y * height)),
-                    outline_color, 2)
+    def display_word():
+        """Display a word with a specific text color."""
+        # Randomly select a word and a color
+        if test_data["current_phase"] == 0:  # Matching phase
+            word = random.choice(colors)
+            color = text_colors[word]
+        else:  # Mismatching phase
+            word = random.choice(colors)
+            color = random.choice([c for c in text_colors.values() if c != text_colors[word]])
 
-        # Draw arm outlines (polylines) for left and right arms with additional points
-        left_arm = [pose_results.pose_landmarks.landmark[idx] for idx in [
-            mp_pose.PoseLandmark.LEFT_SHOULDER,
-            mp_pose.PoseLandmark.LEFT_ELBOW,
-            mp_pose.PoseLandmark.LEFT_WRIST
-        ]]
-        right_arm = [pose_results.pose_landmarks.landmark[idx] for idx in [
-            mp_pose.PoseLandmark.RIGHT_SHOULDER,
-            mp_pose.PoseLandmark.RIGHT_ELBOW,
-            mp_pose.PoseLandmark.RIGHT_WRIST
-        ]]
-        left_arm_points = []
-        for start, end in zip(left_arm, left_arm[1:]):
-            left_arm_points.extend(interpolate_points([start.x * width, start.y * height], [end.x * width, end.y * height]))
-        
-        right_arm_points = []
-        for start, end in zip(right_arm, right_arm[1:]):
-            right_arm_points.extend(interpolate_points([start.x * width, start.y * height], [end.x * width, end.y * height]))
+        # Update the word label
+        word_label.config(text=word, fg=color)
 
-        left_arm_points = np.array(left_arm_points, np.int32)
-        right_arm_points = np.array(right_arm_points, np.int32)
-        cv2.polylines(frame, [left_arm_points], isClosed=False, color=outline_color, thickness=2)
-        cv2.polylines(blank_image, [left_arm_points], isClosed=False, color=outline_color, thickness=2)
-        cv2.polylines(frame, [right_arm_points], isClosed=False, color=outline_color, thickness=2)
-        cv2.polylines(blank_image, [right_arm_points], isClosed=False, color=outline_color, thickness=2)
-    
-    if hand_results.multi_hand_landmarks:
-        for hand_idx, hand_landmarks_list in enumerate(hand_results.multi_hand_landmarks):
-            # Create hand data structure
-            hand_data = {
-                'hand_index': hand_idx,
-                'landmarks': {}
-            }
-            
-            # Get hand type (left or right) if available
-            if hand_results.multi_handedness and len(hand_results.multi_handedness) > hand_idx:
-                hand_data['handedness'] = hand_results.multi_handedness[hand_idx].classification[0].label
-            
-            for i, landmark in enumerate(hand_landmarks_list.landmark):
-                landmark_px = (int(landmark.x * width), int(landmark.y * height))
-                
-                # Store hand landmark data
-                hand_data['landmarks'][f'landmark_{i}'] = {
-                    'x': landmark.x,
-                    'y': landmark.y,
-                    'z': landmark.z
-                }
-                
-                # Determine which finger the landmark belongs to
-                if 1 <= i <= 4:
-                    finger = 'thumb'
-                elif 5 <= i <= 8:
-                    finger = 'index'
-                elif 9 <= i <= 12:
-                    finger = 'middle'
-                elif 13 <= i <= 16:
-                    finger = 'ring'
-                else:
-                    finger = 'pinky'
-                # Draw landmarks with corresponding color
-                cv2.circle(frame, landmark_px, 5, finger_colors[finger], -1)
-                cv2.circle(blank_image, landmark_px, 5, finger_colors[finger], -1)
-            
-            # Add hand data to frame data
-            frame_data['hand_landmarks'].append(hand_data)
-            
-            # Draw lines connecting hand landmarks with corresponding color
-            for finger, connections in finger_connections.items():
-                color = finger_colors[finger]
-                for start_idx, end_idx in connections:
-                    cv2.line(frame,
-                            (int(hand_landmarks_list.landmark[start_idx].x * width),
-                            int(hand_landmarks_list.landmark[start_idx].y * height)),
-                            (int(hand_landmarks_list.landmark[end_idx].x * width),
-                            int(hand_landmarks_list.landmark[end_idx].y * height)), 
-                            color, 2)
-                                
-                    cv2.line(blank_image,
-                            (int(hand_landmarks_list.landmark[start_idx].x * width),
-                            int(hand_landmarks_list.landmark[start_idx].y * height)),
-                            (int(hand_landmarks_list.landmark[end_idx].x * width),
-                            int(hand_landmarks_list.landmark[end_idx].y * height)),
-                            color, 2)
-            
-            # Draw hand outlines (polylines) with additional points
-            for finger, points in {
-                'thumb': [1, 2, 3, 4],
-                'index': [5, 6, 7, 8],
-                'middle': [9, 10, 11, 12],
-                'ring': [13, 14, 15, 16],
-                'pinky': [17, 18, 19, 20]
-            }.items():
-                finger_points = []
-                for start, end in zip(points, points[1:]):
-                    finger_points.extend(interpolate_points(
-                        [hand_landmarks_list.landmark[start].x * width,
-                         hand_landmarks_list.landmark[start].y * height],
-                        [hand_landmarks_list.landmark[end].x * width, 
-                         hand_landmarks_list.landmark[end].y * height]))
-                
-                finger_points = np.array(finger_points, np.int32)
-                cv2.polylines(frame, [finger_points], isClosed=False, color=outline_color, thickness=2)
-                cv2.polylines(blank_image, [finger_points], isClosed=False, color=outline_color, thickness=2)
+        # Save the current word and color for validation
+        test_data["current_word"] = word
+        test_data["current_color"] = color
 
-    # Add the frame data to our collection if recording
-    if recording:
-        positional_data.append(frame_data)
-        
-    # Display the frame with overlay
-    cv2.imshow("Pose Detection - With Graphics", frame)
-    cv2.imshow("Pose Detection - Graphics Only", blank_image)
+    def start_stroop_test():
+        """Start the Stroop test."""
+        # Reset test state
+        test_data["score"] = 0
+        test_data["total_attempts"] = 0
+        test_data["start_time"] = time.time()
 
-    # Write to video files if recording
-    if recording:
-        if out_with_graphics:
-            out_with_graphics.write(frame)
-        if out_graphics_only:
-            out_graphics_only.write(blank_image)
-    
-    key = cv2.waitKey(1) & 0xFF  # Convert to 8-bit
-    if key == 27:  # ESC key
-        # Exit the program
-        break
-    elif key == ord('r') and not recording:
-        # Start recording
-        recording = True
-        positional_data = []  # Reset data collection
-        out_with_graphics = cv2.VideoWriter(os.path.join(save_directory, 'recording_with_graphics.mp4'), fourcc, 20.0, (width, height))
-        out_graphics_only = cv2.VideoWriter(os.path.join(save_directory, 'recording_graphics_only.mp4'), fourcc, 20.0, (width, height))
-        print("Recording started")
-    elif key == ord('s') and recording:
-        # Stop recording
-        recording = False
-        if out_with_graphics:
-            out_with_graphics.release()
-        if out_graphics_only:
-            out_graphics_only.release()
+        # Move to the matching phase
+        test_data["current_phase"] = 0
+
+        # Update the start button to switch phases
+        start_button.config(text="Next Phase", command=lambda: switch_phase())
+
+        # Display the first word
+        display_word()
+
+    def switch_phase():
+        """Switch between matching and mismatching phases."""
+        if test_data["current_phase"] == 0:
+            test_data["current_phase"] = 1
+            instructions.config(text="Now say the COLOR of the text, not the word!")
+            display_word()
+        else:
+            # End the test and display results
+            end_time = time.time()
+            duration = end_time - test_data["start_time"]
+            accuracy = (test_data["score"] / test_data["total_attempts"]) * 100 if test_data["total_attempts"] > 0 else 0
+            result_message = f"Test Complete!\nScore: {test_data['score']} / {test_data['total_attempts']}\nAccuracy: {accuracy:.2f}%\nTime Taken: {duration:.2f} seconds"
+            instructions.config(text=result_message)
+            start_button.config(text="Restart Test", command=lambda: start_stroop_test())
+            word_label.config(text="")
+
+    # Bind key press events for responses
+    def on_key_press(event):
+        """Handle key presses to validate the user's input."""
+        if test_data["current_phase"] < 2:
+            # Match the color of the text to the user's response
+            key = event.char.lower()
+            color_keys = {"g": "green", "r": "red", "b": "blue", "n": "brown"}
+            if key in color_keys:
+                test_data["total_attempts"] += 1
+                if color_keys[key] == test_data["current_color"]:
+                    test_data["score"] += 1
+                display_word()
+
+    # Bind the key press event to the root window
+    root.bind("<KeyPress>", on_key_press)
+
+    # Run the application
+    root.mainloop()
+
+# Run the Stroop test
+stroop_test()
+
+def wait_for_start(test_number):
+    start_input = input(f"Type 'Start test {test_number}' to begin: ")
+    while start_input.strip().lower() != f"start test {test_number}":
+        print("Incorrect input. Try again.")
+        start_input = input(f"Type 'Start test {test_number}' to begin: ")
         
-        # Export the collected data
-        if positional_data:
-            json_path = os.path.join(save_directory, 'positional_data.json')
-            csv_path = os.path.join(save_directory, 'positional_data.csv')
-            export_to_json(positional_data, json_path)
-            export_to_csv(positional_data, csv_path)
+def odd_one_out_test():
+    wait_for_start(3)
+    """
+    A test where the subject selects the odd one out of a set of images
+    """
+    #setting up root window
+    root = tk.Tk()
+    root.title("Odd One Out Test")
+
+    #Load images (Four different images in the same folder as the script)
+    image_paths = [
+    "test_1.jpg",
+    "test_2.png",
+    "test_3.png",
+    "test_4.png"
+]
+    # image_paths = ["Test images"]
+    images = [Image.open(path).resize((100,100)) for path in image_paths]
+    photo_images = [ImageTk.PhotoImage(img) for img in images]
+
+    #Randomize the positions of images 
+    odd_one_index = random.randint(0, 3)
+    randomized_indices = list(range(4))
+    random.shuffle(randomized_indices)
+
+    #Create a frame to hold images
+    frame = tk.Frame(root)
+    frame.pack(pady=20)
+
+    #Function to handle the image click
+    def on_image_click(index):
+        if index == randomized_indices[odd_one_index]:
+
+            messagebox.showinfo("Result","Correct! You found the odd one out")
+        else:
+            messagebox.info("Result", "Incorrect. Try again")
+        root.destroy()  # Close the test after the choice
+
+     # Display the images in a grid
+    for i, idx in enumerate(randomized_indices):
+        button = tk.Button(
+            frame,
+            image=photo_images[idx],
+            command=lambda index=i: on_image_click(index)
+        )
+        button.grid(row=i // 2, column=i % 2, padx=10, pady=10)
+
+    # Add instructions
+    instructions = tk.Label(root, text="Click on the odd one out!", font=("Helvetica", 16))
+    instructions.pack(pady=10)
+
+    # Run the application
+    root.mainloop()
+# Run the test
+odd_one_out_test()
+
+
+def wait_for_start(test_number):
+    start_input = input(f"Type 'Start test {test_number}' to begin: ")
+    while start_input.strip().lower() != f"start test {test_number}":
+        print("Incorrect input. Try again.")
+        start_input = input(f"Type 'Start test {test_number}' to begin: ")
         
-        print("Recording stopped and data exported")
-    
-    # Check if the window was closed
-    if cv2.getWindowProperty("Pose Detection - With Graphics", cv2.WND_PROP_VISIBLE) < 1:
-        break
+def action_fluency_test():
+    wait_for_start(4)
+    """
+    A cognitive test for action fluency where the subject selects as many single-word actions (verbs) as possible in 25 seconds.
+    Some words are distractors (not verbs). Now includes row and column numbers (1-5).
+    """
+
+    # List of possible words (both verbs and non-verbs)
+    action_words = ["run", "jump", "eat", "swim", "read", "write", "dance", "sing", "climb", "kick", 
+                    "throw", "laugh", "cry", "hop", "shout"]
+    distractor_words = ["chair", "table", "tooth", "cloud", "pencil", "shoe", "tree", "lamp", 
+                        "pillow", "bottle", "bicycle", "bird", "phone", "clock", "window"]
+
+    # Mix the action words with some distractors
+    all_words = action_words + random.sample(distractor_words, 10)  # Ensure 25 total words
+    random.shuffle(all_words)  # Shuffle the list
+
+    # GUI Setup
+    root = tk.Tk()
+    root.title("Action Fluency Test")
+    root.geometry("650x550")
+
+    # Instructions
+    instructions = tk.Label(root, text="Select as many ACTION words (verbs) as possible in 25 seconds!", 
+                            font=("Times New Roman", 16), wraplength=600)
+    instructions.pack(pady=10)
+
+    # Frame for word buttons
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=10)
+
+    # Timer Label
+    timer_label = tk.Label(root, text="Time Left: 25s", font=("Times New Roman", 14))
+    timer_label.pack(pady=5)
+
+    # Feedback Label
+    feedback_label = tk.Label(root, text="", font=("Times New Roman", 14))
+    feedback_label.pack(pady=10)
+
+    # Selected actions list
+    selected_actions = []
+    correct_selections = 0
+    incorrect_selections = 0
+    start_time = time.time()
+
+    def update_timer():
+        """
+        Updates the timer and ends the test when time runs out.
+        """
+        time_left = 25 - int(time.time() - start_time)
+        if time_left > 0:
+            timer_label.config(text=f"Time Left: {time_left}s")
+            root.after(1000, update_timer)  # Update every second
+        else:
+            end_test()
+
+    def select_action(word, button):
+        """
+        Handles the selection of words.
+        """
+        nonlocal correct_selections, incorrect_selections
+
+        if word not in selected_actions:
+            selected_actions.append(word)
+            button.config(state=tk.DISABLED)  # Disable button after selection
+
+            if word in action_words:
+                correct_selections += 1
+            else:
+                incorrect_selections += 1
+
+    def end_test():
+        """
+        Ends the test and shows the results.
+        """
+        accuracy = (correct_selections / len(action_words)) * 100
+
+        result_message = (f"Test Over!\nYou selected {len(selected_actions)} words.\n"
+                          f"Correct actions: {correct_selections}/{len(action_words)}\n"
+                          f"Incorrect selections: {incorrect_selections}\n"
+                          f"Accuracy: {accuracy:.2f}%")
+
+        feedback_label.config(text=result_message, fg="blue")
         
-# Release resources
-cap.release()
-if out_with_graphics:
-    out_with_graphics.release()
-if out_graphics_only:
-    out_graphics_only.release()
-cv2.destroyAllWindows()
+        # Disable all buttons
+        for button in buttons:
+            button.config(state=tk.DISABLED)
+
+    # Create labels for row and column numbers
+    for i in range(5):  # Row numbers
+        row_label = tk.Label(button_frame, text=str(i + 1), font=("Times New Roman", 20))
+        row_label.grid(row=i + 1, column=0, padx=5, pady=5)  # Shift down by 1 to avoid overlap
+
+    for j in range(5):  # Column numbers
+        col_label = tk.Label(button_frame, text=str(j + 1), font=("Times New Roman", 20))
+        col_label.grid(row=0, column=j + 1, padx=5, pady=5)  # Shift right by 1 to avoid overlap
+
+    # Create buttons for available words in a 5x5 matrix
+    buttons = []
+    for i in range(5):  # Rows
+        for j in range(5):  # Columns
+            word = all_words[i * 5 + j]  # Get the word at index
+            button = tk.Button(button_frame, text=word, font=("Times New Roman", 25),
+                               width=10, height=2,
+                               command=lambda w=word, btn=None: select_action(w, btn))
+            button.grid(row=i + 1, column=j + 1, padx=5, pady=5)  # Offset by 1 to fit row/col numbers
+            buttons.append(button)
+            buttons[-1].config(command=lambda w=word, btn=buttons[-1]: select_action(w, btn))
+
+    # Start the timer
+    update_timer()
+
+    # Run the GUI application
+    root.mainloop()
+
+# Run the test
+action_fluency_test()
+
+
+# """
+# Test-Specific Quantification Criteria:
+# 1. Recall Test:
+# 0: Correct sequence, perfect accuracy (100%).
+
+# 1: Minor error or hesitation, accuracy ≥ 90%.
+
+# 2: Several mistakes or noticeable hesitation, accuracy ≥ 70%.
+
+# 3: Frequent errors or confusion, accuracy between 40%–69%.
+
+# 4: Severe confusion or inability to sequence correctly, accuracy < 40%.
+
+# 2. Stroop Test:
+# Quantification based on accuracy and reaction speed:
+
+# 0: Accurate and quick response (≥ 90% accuracy, rapid response without delay).
+
+# 1: Slight delays or minimal errors (80-89% accuracy).
+
+# 2: Noticeable slowing, moderate accuracy (60-79% accuracy).
+
+# 3: Substantial slowing or frequent errors (40-59% accuracy).
+
+# 4: Severe difficulty, frequent incorrect responses (<40% accuracy).
+
+# 3. Odd One Out Test:
+# Evaluation based on the participant’s ability to identify the odd image promptly:
+
+# 0: Immediate correct identification.
+
+# 1: Slight delay, but correct identification within a brief moment.
+
+# 2: Noticeable hesitation, correct on second attempt.
+
+# 3: Incorrect initially, correct after multiple attempts or considerable assistance.
+
+# 4: Unable to identify or incorrect despite multiple attempts.
+
+# 4. Action Fluency Test:
+# Quantification based on selection accuracy and time management during the 25 seconds test:
+
+# 0: High accuracy (≥90%), selections made promptly and confidently.
+
+# 1: Slight delay or minor incorrect selections, overall accuracy between 80-89%.
+
+# 2: Noticeable delays, several incorrect selections, accuracy between 60-79%.
+
+# 3: Difficulty managing time, many incorrect choices, accuracy between 40-59%.
+
+# 4: Severe difficulty, minimal correct selections, accuracy below 40%.
+
+# Implementation:
+# After each test, scores from 0 to 4 will be assigned based on the above criteria. The scores can then be summed for an overall cognitive performance score, allowing for comparison and tracking over time. This quantification method ensures clarity, consistency, and alignment with established clinical evaluation standards such as those provided by the MDS-UPDRS.
+
+

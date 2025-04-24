@@ -53,7 +53,14 @@ def co_movements():
     return R_L_movements
 
 
+def wait_for_start(test_number):
+    start_input = input(f"Type 'Start test {test_number}' to begin: ")
+    while start_input.strip().lower() != f"start test {test_number}":
+        print("Incorrect input. Try again.")
+        start_input = input(f"Type 'Start test {test_number}' to begin: ")
+
 def recall_test():
+    wait_for_start(1)
     """
     A recall test where a patient is shown a jumbled-up sequence of letters and numbers.
     The patient must reorder them in ascending order by selecting them by letters A-Z first, then numbers 1-10.
@@ -145,8 +152,14 @@ def recall_test():
 recall_test()
 
 
-
+def wait_for_start(test_number):
+    start_input = input(f"Type 'Start test {test_number}' to begin: ")
+    while start_input.strip().lower() != f"start test {test_number}":
+        print("Incorrect input. Try again.")
+        start_input = input(f"Type 'Start test {test_number}' to begin: ")
+        
 def stroop_test():
+    wait_for_start(2)
     """
     A stroop test where the subject/patient is asked to sat the color of the text, not the word itself.
     Initial test will have the color and text match, moves onto a mismatched vesion.
@@ -254,8 +267,14 @@ def stroop_test():
 # Run the Stroop test
 stroop_test()
 
-
+def wait_for_start(test_number):
+    start_input = input(f"Type 'Start test {test_number}' to begin: ")
+    while start_input.strip().lower() != f"start test {test_number}":
+        print("Incorrect input. Try again.")
+        start_input = input(f"Type 'Start test {test_number}' to begin: ")
+        
 def odd_one_out_test():
+    wait_for_start(3)
     """
     A test where the subject selects the odd one out of a set of images
     """
@@ -311,8 +330,14 @@ def odd_one_out_test():
 odd_one_out_test()
 
 
-
+def wait_for_start(test_number):
+    start_input = input(f"Type 'Start test {test_number}' to begin: ")
+    while start_input.strip().lower() != f"start test {test_number}":
+        print("Incorrect input. Try again.")
+        start_input = input(f"Type 'Start test {test_number}' to begin: ")
+        
 def action_fluency_test():
+    wait_for_start(4)
     """
     A cognitive test for action fluency where the subject selects as many single-word actions (verbs) as possible in 25 seconds.
     Some words are distractors (not verbs). Now includes row and column numbers (1-5).
@@ -428,3 +453,61 @@ def action_fluency_test():
 
 # Run the test
 action_fluency_test()
+
+
+# """
+# Test-Specific Quantification Criteria:
+# 1. Recall Test:
+# 0: Correct sequence, perfect accuracy (100%).
+
+# 1: Minor error or hesitation, accuracy ≥ 90%.
+
+# 2: Several mistakes or noticeable hesitation, accuracy ≥ 70%.
+
+# 3: Frequent errors or confusion, accuracy between 40%–69%.
+
+# 4: Severe confusion or inability to sequence correctly, accuracy < 40%.
+
+# 2. Stroop Test:
+# Quantification based on accuracy and reaction speed:
+
+# 0: Accurate and quick response (≥ 90% accuracy, rapid response without delay).
+
+# 1: Slight delays or minimal errors (80-89% accuracy).
+
+# 2: Noticeable slowing, moderate accuracy (60-79% accuracy).
+
+# 3: Substantial slowing or frequent errors (40-59% accuracy).
+
+# 4: Severe difficulty, frequent incorrect responses (<40% accuracy).
+
+# 3. Odd One Out Test:
+# Evaluation based on the participant’s ability to identify the odd image promptly:
+
+# 0: Immediate correct identification.
+
+# 1: Slight delay, but correct identification within a brief moment.
+
+# 2: Noticeable hesitation, correct on second attempt.
+
+# 3: Incorrect initially, correct after multiple attempts or considerable assistance.
+
+# 4: Unable to identify or incorrect despite multiple attempts.
+
+# 4. Action Fluency Test:
+# Quantification based on selection accuracy and time management during the 25 seconds test:
+
+# 0: High accuracy (≥90%), selections made promptly and confidently.
+
+# 1: Slight delay or minor incorrect selections, overall accuracy between 80-89%.
+
+# 2: Noticeable delays, several incorrect selections, accuracy between 60-79%.
+
+# 3: Difficulty managing time, many incorrect choices, accuracy between 40-59%.
+
+# 4: Severe difficulty, minimal correct selections, accuracy below 40%.
+
+# Implementation:
+# After each test, scores from 0 to 4 will be assigned based on the above criteria. The scores can then be summed for an overall cognitive performance score, allowing for comparison and tracking over time. This quantification method ensures clarity, consistency, and alignment with established clinical evaluation standards such as those provided by the MDS-UPDRS.
+
+
