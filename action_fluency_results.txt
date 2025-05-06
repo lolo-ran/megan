@@ -1,0 +1,16 @@
+=== ACTION FLUENCY TEST SUMMARY ===
+Selected words: run throw hop laugh cry climb write swim read eat dance jump shout sing kick
+Correct selections: 15/15
+Incorrect selections: 0
+Accuracy: 100.00%
+Time Taken: 25.73 seconds
+Clinician Score (0–4): 0
+
+=== ACTION FLUENCY TEST SUMMARY ===
+Selected words: eat jump laugh cry swim dance throw run climb read hop sing write shout
+Correct selections: 14/15
+Incorrect selections: 0
+Accuracy: 93.33%
+Time Taken: 25.53 seconds
+Clinician Score (0–4): 0
+

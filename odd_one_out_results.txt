@@ -1,0 +1,21 @@
+=== ODD ONE OUT TEST SUMMARY ===
+Correct image index: 1
+Selected image index: 1
+Time taken: 3.97 seconds
+Correct: Yes
+Clinician Score (0–4): 0
+
+=== ODD ONE OUT TEST SUMMARY ===
+Correct image index: 1
+Selected image index: 2
+Time taken: 1.47 seconds
+Correct: No
+Clinician Score (0–4): 4
+
+=== ODD ONE OUT TEST SUMMARY ===
+Correct image index: 3
+Selected image index: 2
+Time taken: 2.41 seconds
+Correct: No
+Clinician Score (0–4): 4
+

@@ -1,0 +1,26 @@
+=== RECALL TEST SUMMARY ===
+Accuracy: 25.00%
+Correct selections: 2/8
+Clinician Score (0–4): 4
+
+=== RECALL TEST SUMMARY ===
+Entered order: C K T V Y 5 9 8
+Correct order: C K T V Y 5 8 9
+Accuracy: 75.00%
+Correct selections: 6/8
+Clinician Score (0–4): 2
+
+=== RECALL TEST SUMMARY ===
+Entered order: 6 K G O 0 2 N H
+Correct order: G H K N O 0 2 6
+Accuracy: 0.00%
+Correct selections: 0/8
+Clinician Score (0–4): 4
+
+=== RECALL TEST SUMMARY ===
+Entered order: B E T V Z 0 6 5
+Correct order: B E T V Z 0 5 6
+Accuracy: 75.00%
+Correct selections: 6/8
+Clinician Score (0–4): 2
+
