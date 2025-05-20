@@ -165,7 +165,7 @@ print(f"Correct selections: {results['correct_count']}/8")
 print(f"Clinician Score (0–4): {results['score']}")
 
 # Save to file
-with open("recall_results.txt", "a") as f:
+with open("New Exam Code/recall_results.txt", "a") as f:
     f.write("=== RECALL TEST SUMMARY ===\n")
     f.write(f"Entered order: {' '.join(results['selected_order'])}\n")
     f.write(f"Correct order: {' '.join(results['correct_order'])}\n")
@@ -306,7 +306,7 @@ def stroop_test():
     print(f"Time Taken: {duration:.2f} seconds")
     print(f"Clinician Score (0–4): {score}")
 
-    with open("stroop_results.txt", "a") as f:
+    with open("New Exam Code/stroop_results.txt", "a") as f:
         f.write("=== STROOP TEST SUMMARY ===\n")
         f.write(f"Correct text colors: {' '.join(correct_colors)}\n")
         f.write(f"Participant responses: {' '.join(selected_colors)}\n")
@@ -328,9 +328,10 @@ def wait_for_start(test_number):
 def calculate_score(is_correct):
     return 0 if is_correct else 4
 
+
+
 def odd_one_out_test():
     wait_for_start(3)
-
     # GUI setup
     root = tk.Tk()
     root.title("Odd One Out Test")
@@ -341,23 +342,22 @@ def odd_one_out_test():
 
     # Load images
     image_paths = [
-        "test_1.jpg",
-        "test_2.png",
-        "test_3.png",
-        "test_4.png"
+        "New Exam Code/test_1.jpg",
+        "New Exam Code/test_2.png",  # This is the odd one
+        "New Exam Code/test_3.png",
+        "New Exam Code/test_4.png"
     ]
     images = [Image.open(path).resize((120, 120)) for path in image_paths]
     photo_images = [ImageTk.PhotoImage(img) for img in images]
 
-    # Choose the odd one (index 0–3)
-    odd_one_index = random.randint(0, 3)
-    randomized_indices = list(range(4))
-    random.shuffle(randomized_indices)
+    # Fixed image order
+    fixed_indices = [0, 1, 2, 3]
+    odd_one_index = 1  # test_2.png is the odd one
 
     # Track result
     result_data = {
         "selected_index": None,
-        "correct_index": randomized_indices[odd_one_index],
+        "correct_index": odd_one_index,
         "start_time": time.time(),
         "end_time": None
     }
@@ -386,7 +386,7 @@ def odd_one_out_test():
         print(f"Correct: {'Yes' if is_correct else 'No'}")
         print(f"Clinician Score (0–4): {score}")
 
-        with open("odd_one_out_results.txt", "a") as f:
+        with open("New Exam Code/odd_one_out_results.txt", "a") as f:
             f.write("=== ODD ONE OUT TEST SUMMARY ===\n")
             f.write(f"Correct image index: {result_data['correct_index']}\n")
             f.write(f"Selected image index: {result_data['selected_index']}\n")
@@ -395,11 +395,11 @@ def odd_one_out_test():
             f.write(f"Clinician Score (0–4): {score}\n\n")
 
     # Display images
-    for i, idx in enumerate(randomized_indices):
+    for i, idx in enumerate(fixed_indices):
         button = ttk.Button(
             frame,
             image=photo_images[idx],
-            command=lambda index=i: on_image_click(index)
+            command=lambda index=idx: on_image_click(index)
         )
         button.grid(row=i // 2, column=i % 2, padx=10, pady=10)
 
@@ -532,7 +532,7 @@ def action_fluency_test():
     print(f"Time Taken: {duration:.2f} seconds")
     print(f"Clinician Score (0–4): {score}")
 
-    with open("action_fluency_results.txt", "a") as f:
+    with open("New Exam Code/action_fluency_results.txt", "a") as f:
         f.write("=== ACTION FLUENCY TEST SUMMARY ===\n")
         f.write(f"Selected words: {' '.join(selected_actions)}\n")
         f.write(f"Correct selections: {correct_selections}/{total_correct}\n")

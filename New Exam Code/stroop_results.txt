@@ -22,3 +22,19 @@ Accuracy: 93.33%
 Time Taken: 29.23 seconds
 Clinician Score (0–4): 0
 
+=== STROOP TEST SUMMARY ===
+Correct text colors: green blue
+Participant responses: 
+Score: 0 / 0
+Accuracy: 0.00%
+Time Taken: 1.73 seconds
+Clinician Score (0–4): 4
+
+=== STROOP TEST SUMMARY ===
+Correct text colors: green green
+Participant responses: 
+Score: 0 / 0
+Accuracy: 0.00%
+Time Taken: 5.80 seconds
+Clinician Score (0–4): 4
+

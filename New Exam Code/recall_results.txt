@@ -24,3 +24,17 @@ Accuracy: 75.00%
 Correct selections: 6/8
 Clinician Score (0–4): 2
 
+=== RECALL TEST SUMMARY ===
+Entered order: 0 8 G S 5 E A J
+Correct order: A E G J S 0 5 8
+Accuracy: 12.50%
+Correct selections: 1/8
+Clinician Score (0–4): 4
+
+=== RECALL TEST SUMMARY ===
+Entered order: D O R Q U 0 2 5
+Correct order: D O Q R U 0 2 5
+Accuracy: 75.00%
+Correct selections: 6/8
+Clinician Score (0–4): 2
+
